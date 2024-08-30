@@ -1,4 +1,11 @@
 import streamlit as st
+import os
+import time
+import speech_recognition as sr
+import sounddevice as sd
+import soundfile as sf
+import wave
+import numpy as np
 
 def add_transcription_to_history(source, text, emotions):
     timestamp = time.strftime('%B %d, %Y at %I:%M')
