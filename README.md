@@ -17,7 +17,7 @@ The app also displays the emotion analysis results in the form of both bar chart
 
 1. Clone the repository:
     ```bash
-    git clone [https://github.com/your-username/emotion-classification-app.git](https://github.com/Anubothu-Aravind/Emotion-Classification-using-audio.git)
+    git clone[https://github.com/your-username/emotion-classification-app.git
     ```
 
 2. Navigate into the project directory:
