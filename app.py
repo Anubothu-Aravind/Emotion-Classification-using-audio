@@ -1,7 +1,7 @@
 import os
 import warnings
-import dotenv
-from dotenv import load_dotenv
+# import dotenv
+# from dotenv import load_dotenv
 import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -14,7 +14,7 @@ import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 
-load_dotenv()
+# load_dotenv()
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
