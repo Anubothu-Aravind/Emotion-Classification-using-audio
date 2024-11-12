@@ -19,39 +19,19 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-hf_token = os.getenv("hf_token")
+hf_token = os.getenv("hf_token") or "YOUR_HF_TOKEN"  # Hard-code your token if needed
 os.environ['HUGGINGFACEHUB_API_TOKEN'] = hf_token
 warnings.filterwarnings("ignore", category=FutureWarning, message=".*`clean_up_tokenization_spaces`.*")
 
-try:
-    from transformers import Trainer
-    USE_TRAINER = True
-except ImportError:
-    USE_TRAINER = False
-    st.warning("Trainer could not be imported. Using a fallback method for emotion analysis. For optimal performance, please run: pip install transformers[torch] -U")
-
-class SimpleDataset:
-    def __init__(self, tokenized_texts):
-        self.tokenized_texts = tokenized_texts
-
-    def __len__(self):
-        return len(self.tokenized_texts["input_ids"])
-
-    def __getitem__(self, idx):
-        return {k: v[idx] for k, v in self.tokenized_texts.items()}
-
+# Loading model and tokenizer without Trainer
 @st.cache_resource
 def load_model_and_tokenizer():
     model_name = "j-hartmann/emotion-english-distilroberta-base"
     tokenizer = AutoTokenizer.from_pretrained(model_name, token=hf_token)
     model = AutoModelForSequenceClassification.from_pretrained(model_name, token=hf_token)
-    if USE_TRAINER:
-        trainer = Trainer(model=model)
-    else:
-        trainer = None
-    return tokenizer, model, trainer
+    return tokenizer, model
 
-tokenizer, model, trainer = load_model_and_tokenizer()
+tokenizer, model = load_model_and_tokenizer()
 
 def capture_audio(duration, sample_rate=44100):
     recording = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='int16')
@@ -88,16 +68,9 @@ def transcribe_audio(file_path):
 
 def analyze_emotions(text):
     tokenized_texts = tokenizer([text], truncation=True, padding=True, return_tensors="pt")
-
-    if USE_TRAINER:
-        pred_dataset = SimpleDataset(tokenized_texts)
-        predictions = trainer.predict(pred_dataset)
-        logits = predictions.predictions[0]
-    else:
-        with torch.no_grad():
-            outputs = model(**tokenized_texts)
-        logits = outputs.logits.numpy()[0]
-
+    with torch.no_grad():
+        outputs = model(**tokenized_texts)
+    logits = outputs.logits.numpy()[0]
     probs = np.exp(logits) / np.exp(logits).sum()
 
     emotions = {
@@ -127,7 +100,6 @@ def plot_emotions(emotions):
     probabilities = list(emotions.values())
 
     fig, ax = plt.subplots(1, 2, figsize=(16, 10))
-
     sns.barplot(x=probabilities, y=labels, ax=ax[0], palette=emotion_colors)
     ax[0].set_title('Emotion Probabilities (Bar Chart)')
     ax[0].set_xlabel('Probability')
@@ -140,7 +112,6 @@ def plot_emotions(emotions):
 
     legend_labels = [f'{emotion}: {color}' for emotion, color in emotion_colors.items()]
     fig.legend(legend_labels, loc='center left', bbox_to_anchor=(1, 0.5), title='Emotion Legend')
-
     st.pyplot(fig)
 
 def print_emotions(emotions):
@@ -171,7 +142,6 @@ def process_audio(file_path, source):
 
     print_emotions(emotions)
     add_transcription_to_history(source, text, emotions)
-
 
 st.title("Emotion Classification App")
 
