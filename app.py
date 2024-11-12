@@ -19,7 +19,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-hf_token = os.getenv("hf_token") or "YOUR_HF_TOKEN"  # Hard-code your token if needed
+hf_token = os.getenv("hf_token") or "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"  # Hard-code your token if needed
 os.environ['HUGGINGFACEHUB_API_TOKEN'] = hf_token
 warnings.filterwarnings("ignore", category=FutureWarning, message=".*`clean_up_tokenization_spaces`.*")
 
