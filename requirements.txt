@@ -7,4 +7,3 @@ soundfile
 speechrecognition
 transformers
 torch
-libportaudio2
