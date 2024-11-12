@@ -11,11 +11,15 @@ import numpy as np
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 
+# Initialize session state for history if not already done
+if 'history' not in st.session_state:
+    st.session_state['history'] = []
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
-hf_token = os.getenv("hf_token") or "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"  # Hard-code your token if needed
+hf_token = os.getenv("hf_token") or "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"  # Replace with your token if needed
 os.environ['HUGGINGFACEHUB_API_TOKEN'] = hf_token
 warnings.filterwarnings("ignore", category=FutureWarning, message=".*`clean_up_tokenization_spaces`.*")
 
@@ -95,28 +99,38 @@ def plot_emotions(emotions):
 
     st.pyplot(fig)
 
-def print_emotions(emotions):
-    st.write("--------------------------")
-    st.write("Emotion Analysis")
-    plot_emotions(emotions)
-    st.write("--------------------------")
-    st.write("Emotion Analysis Results:")
+def add_to_history(source, text, emotions):
+    timestamp = time.strftime('%B %d, %Y at %I:%M %p')
+    emotion_analysis = "\n".join([f"{emotion.capitalize()}: {score:.2%}" for emotion, score in emotions.items()])
     dominant_emotion = max(emotions, key=emotions.get)
-    st.write(f"Dominant emotion: {dominant_emotion.capitalize()} ({emotions[dominant_emotion]:.2%})")
+    entry = f'Audio Received at "{timestamp}"\n\nAudio Loaded From "{source}"\n\nTranscribed Text:\n\n{text[:100]}...\n\nEmotion Analysis:\n\n{emotion_analysis}\n\nDominant emotion: {dominant_emotion.capitalize()} ({emotions[dominant_emotion]:.2%})'
+    st.session_state['history'].insert(0, entry)
 
 def process_audio(file_path, source):
     with st.spinner("Transcribing..."):
         text = transcribe_audio(file_path)
 
     st.write("--------------------------")
-    st.write(f"Transcribed Text : {text}")
+    st.write(f"Transcribed Text: {text}")
 
     with st.spinner("Analyzing emotions..."):
         emotions = analyze_emotions(text)
 
-    print_emotions(emotions)
+    plot_emotions(emotions)
+    add_to_history(source, text, emotions)
 
 st.title("Emotion Classification App")
+
+st.sidebar.header("Transcription History")
+if st.session_state['history']:
+    for i, entry in enumerate(st.session_state['history'], 1):
+        with st.sidebar.expander(f"Transcription {i}", expanded=(i == 1)):
+            st.write(entry)
+    if st.sidebar.button("Clear History"):
+        st.session_state['history'] = []
+        st.rerun()
+else:
+    st.sidebar.write("No Previous Transcription Available.")
 
 input_method = st.selectbox("Choose audio input method:", ["Upload File"])
 
